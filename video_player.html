@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Video Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+
+        .video-section {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            display: block;
+        }
+
+        .events-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            max-height: 800px;
+        }
+
+        .events-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .events-header h2 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .clear-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: #c0392b;
+        }
+
+        .events-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .event-item {
+            background: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .event-type {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .event-details {
+            color: #555;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .timestamp {
+            color: #888;
+            font-size: 12px;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .events-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .events-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .events-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .events-list::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stats h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .events-section {
+                max-height: 500px;
+            }
+        }
+
+        .title {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 32px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">🎬 Interactive Video Player with Event Tracking</h1>
+    
+    <div class="container">
+        <div class="video-section">
+            <div class="video-container">
+                <video id="videoPlayer" controls controlsList="nodownload">
+                    <source src="pd1.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+
+        <div class="events-section">
+            <div class="events-header">
+                <h2>📊 Event Log</h2>
+                <button class="clear-btn" onclick="clearEvents()">Clear Log</button>
+            </div>
+
+            <div class="stats">
+                <h3>Statistics</h3>
+                <div class="stat-item">
+                    <span>Total Events:</span>
+                    <span class="stat-value" id="totalEvents">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Play Count:</span>
+                    <span class="stat-value" id="playCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Pause Count:</span>
+                    <span class="stat-value" id="pauseCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Seek Count:</span>
+                    <span class="stat-value" id="seekCount">0</span>
+                </div>
+            </div>
+
+            <div class="events-list" id="eventsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('videoPlayer');
+        const eventsList = document.getElementById('eventsList');
+        
+        // Statistics counters
+        let stats = {
+            total: 0,
+            play: 0,
+            pause: 0,
+            seek: 0
+        };
+
+        // Track seeking behavior
+        let isSeeking = false;
+        let seekStartTime = null;
+        let previousTime = 0;
+
+        // Format time in HH:MM:SS or MM:SS format
+        function formatVideoTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            if (hrs > 0) {
+                return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Format timestamp
+        function formatTimestamp() {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+        }
+
+        // Add event to log
+        function logEvent(eventType, details) {
+            stats.total++;
+            
+            const eventItem = document.createElement('div');
+            eventItem.className = 'event-item';
+            
+            const eventTypeDiv = document.createElement('div');
+            eventTypeDiv.className = 'event-type';
+            eventTypeDiv.textContent = eventType;
+            
+            const eventDetailsDiv = document.createElement('div');
+            eventDetailsDiv.className = 'event-details';
+            eventDetailsDiv.innerHTML = details;
+            
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'timestamp';
+            timestampDiv.textContent = `⏰ ${formatTimestamp()}`;
+            
+            eventItem.appendChild(eventTypeDiv);
+            eventItem.appendChild(eventDetailsDiv);
+            eventItem.appendChild(timestampDiv);
+            
+            // Add to top of list
+            eventsList.insertBefore(eventItem, eventsList.firstChild);
+            
+            // Update statistics
+            updateStats();
+        }
+
+        // Update statistics display
+        function updateStats() {
+            document.getElementById('totalEvents').textContent = stats.total;
+            document.getElementById('playCount').textContent = stats.play;
+            document.getElementById('pauseCount').textContent = stats.pause;
+            document.getElementById('seekCount').textContent = stats.seek;
+        }
+
+        // Clear all events
+        function clearEvents() {
+            eventsList.innerHTML = '';
+            stats = { total: 0, play: 0, pause: 0, seek: 0 };
+            updateStats();
+        }
+
+        // Event Listeners
+
+        // Play event
+        video.addEventListener('play', () => {
+            stats.play++;
+            logEvent('▶️ PLAY', `Video started playing at <strong>${formatVideoTime(video.currentTime)}</strong>`);
+        });
+
+        // Pause event
+        video.addEventListener('pause', () => {
+            if (!video.ended) {
+                stats.pause++;
+                logEvent('⏸️ PAUSE', `Video paused at <strong>${formatVideoTime(video.currentTime)}</strong>`);
+            }
+        });
+
+        // Ended event
+        video.addEventListener('ended', () => {
+            logEvent('🏁 ENDED', `Video playback completed at <strong>${formatVideoTime(video.currentTime)}</strong>`);
+        });
+
+        // Seeking event
+        video.addEventListener('seeking', () => {
+            if (!isSeeking) {
+                // Capture the position before seeking starts
+                seekStartTime = previousTime;
+                isSeeking = true;
+            }
+        });
+
+        // Seeked event
+        video.addEventListener('seeked', () => {
+            if (isSeeking && seekStartTime !== null) {
+                const seekEndTime = video.currentTime;
+                
+                // Only log if there was an actual change
+                if (Math.abs(seekEndTime - seekStartTime) > 0.1) {
+                    stats.seek++;
+                    const fromTime = formatVideoTime(seekStartTime);
+                    const toTime = formatVideoTime(seekEndTime);
+                    const direction = seekEndTime > seekStartTime ? '⏩ Forward' : '⏪ Backward';
+                    const jumpAmount = Math.abs(seekEndTime - seekStartTime);
+                    
+                    logEvent(`🎯 SEEK (${direction})`, 
+                        `Seeked from <strong>${fromTime}</strong> to <strong>${toTime}</strong><br>` +
+                        `Jump: <strong>${jumpAmount.toFixed(2)}s</strong>`
+                    );
+                }
+                
+                isSeeking = false;
+                seekStartTime = null;
+                previousTime = seekEndTime;
+            }
+        });
+
+        // Volume change event
+        video.addEventListener('volumechange', () => {
+            if (video.muted) {
+                logEvent('🔇 MUTED', 
+                    `Audio muted at video time <strong>${formatVideoTime(video.currentTime)}</strong>`
+                );
+            } else {
+                const volumePercent = Math.round(video.volume * 100);
+                logEvent('🔊 VOLUME CHANGE', 
+                    `Volume set to <strong>${volumePercent}%</strong> at video time <strong>${formatVideoTime(video.currentTime)}</strong>`
+                );
+            }
+        });
+
+        // Playback rate change
+        video.addEventListener('ratechange', () => {
+            logEvent('⚡ PLAYBACK RATE', 
+                `Playback speed changed to <strong>${video.playbackRate}x</strong> at video time <strong>${formatVideoTime(video.currentTime)}</strong>`
+            );
+        });
+
+        // Fullscreen change
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                logEvent('🖥️ FULLSCREEN ENTERED', 
+                    `Entered fullscreen mode at video time <strong>${formatVideoTime(video.currentTime)}</strong>`
+                );
+            } else {
+                logEvent('🪟 FULLSCREEN EXITED', 
+                    `Exited fullscreen mode at video time <strong>${formatVideoTime(video.currentTime)}</strong>`
+                );
+            }
+        });
+
+        // Picture-in-Picture events
+        video.addEventListener('enterpictureinpicture', () => {
+            logEvent('📺 PIP ENTERED', 
+                `Entered Picture-in-Picture mode at video time <strong>${formatVideoTime(video.currentTime)}</strong>`
+            );
+        });
+
+        video.addEventListener('leavepictureinpicture', () => {
+            logEvent('📺 PIP EXITED', 
+                `Exited Picture-in-Picture mode at video time <strong>${formatVideoTime(video.currentTime)}</strong>`
+            );
+        });
+
+        // Loaded metadata
+        video.addEventListener('loadedmetadata', () => {
+            logEvent('📹 VIDEO LOADED', 
+                `Video metadata loaded<br>` +
+                `Duration: <strong>${formatVideoTime(video.duration)}</strong><br>` +
+                `Resolution: <strong>${video.videoWidth}x${video.videoHeight}</strong>`
+            );
+        });
+
+        // Time update (track every 5 seconds of playback)
+        let lastLoggedSecond = -5;
+        video.addEventListener('timeupdate', () => {
+            // Only update previousTime when not seeking
+            if (!isSeeking) {
+                previousTime = video.currentTime;
+            }
+            
+            const currentSecond = Math.floor(video.currentTime);
+            if (currentSecond % 5 === 0 && currentSecond !== lastLoggedSecond && !video.paused) {
+                lastLoggedSecond = currentSecond;
+                // Optional: log playback progress every 5 seconds
+                // Uncomment if you want this feature:
+                // logEvent('⏱️ PLAYBACK PROGRESS', `Playing at <strong>${formatVideoTime(video.currentTime)}</strong>`);
+            }
+        });
+
+        // Waiting/buffering
+        video.addEventListener('waiting', () => {
+            logEvent('⏳ BUFFERING', 
+                `Video buffering at <strong>${formatVideoTime(video.currentTime)}</strong>`
+            );
+        });
+
+        // Can play (buffering complete)
+        video.addEventListener('canplay', () => {
+            if (video.currentTime > 0) {
+                logEvent('✅ READY TO PLAY', 
+                    `Buffering complete at <strong>${formatVideoTime(video.currentTime)}</strong>`
+                );
+            }
+        });
+
+        // Error handling
+        video.addEventListener('error', () => {
+            logEvent('❌ ERROR', 
+                `An error occurred while loading or playing the video`
+            );
+        });
+
+        // Initial log
+        console.log('Video Player with Event Tracking initialized');
+    </script>
+</body>
+</html>
